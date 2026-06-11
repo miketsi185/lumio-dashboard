@@ -96,7 +96,7 @@ def get_ga4_traffic(credentials):
         }
         for row in response.rows
     ])
-    ddef get_search_console_keywords(credentials):
+    def get_search_console_keywords(credentials):
     
     service = build("searchconsole", "v1", credentials=credentials)
 
