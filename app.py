@@ -123,7 +123,6 @@ def get_ga4_traffic(credentials):
             "Position": round(row.get("position", 0), 1),
         }
         for row in rows
-    ])
     
     ])
 def google_login_button():
