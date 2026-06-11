@@ -100,8 +100,8 @@ def get_ga4_traffic(credentials):
     service = build("searchconsole", "v1", credentials=credentials)
 
     request = {
-        "startDate": "2026-05-01",
-        "endDate": "2026-06-11",
+        "startDate": "2025-01-01",
+        "endDate": "today",
         "dimensions": ["query"],
         "rowLimit": 20,
     }
@@ -113,6 +113,16 @@ def get_ga4_traffic(credentials):
 
     rows = response.get("rows", [])
 
+    return pd.DataFrame([
+        {
+            "Query": row["keys"][0],
+            "Clicks": row.get("clicks", 0),
+            "Impressions": row.get("impressions", 0),
+            "CTR": round(row.get("ctr", 0) * 100, 2),
+            "Position": round(row.get("position", 0), 1),
+        }
+        for row in rows
+    ])
     return pd.DataFrame([
         {
             "Query": row["keys"][0],
