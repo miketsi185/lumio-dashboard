@@ -96,7 +96,7 @@ def get_ga4_traffic(credentials):
         }
         for row in response.rows
     ])
-    def get_search_console_keywords(credentials):
+    ddef get_search_console_keywords(credentials):
     service = build("searchconsole", "v1", credentials=credentials)
 
     request = {
@@ -112,6 +112,17 @@ def get_ga4_traffic(credentials):
     ).execute()
 
     rows = response.get("rows", [])
+
+    return pd.DataFrame([
+        {
+            "Query": row["keys"][0],
+            "Clicks": row.get("clicks", 0),
+            "Impressions": row.get("impressions", 0),
+            "CTR": round(row.get("ctr", 0) * 100, 2),
+            "Position": round(row.get("position", 0), 1),
+        }
+        for row in rows
+    ])
 
     return pd.DataFrame([
         {
