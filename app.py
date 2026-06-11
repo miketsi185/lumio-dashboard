@@ -1,11 +1,10 @@
-import json
+
 import requests
 import pandas as pd
 import streamlit as st
 import plotly.express as px
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import DateRange, Metric, Dimension, RunReportRequest
@@ -35,12 +34,7 @@ h1,h2,h3,h4,p,div,span,label { color:white; }
 # -----------------------------
 # Helpers
 # -----------------------------
-def google_credentials(scopes):
-    creds_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT_JSON"])
-    return service_account.Credentials.from_service_account_info(
-        creds_dict,
-        scopes=scopes
-    )
+
 
 
 def get_search_console_keywords():
