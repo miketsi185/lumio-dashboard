@@ -128,7 +128,7 @@ def get_ga4_traffic(credentials):
         for row in rows
     ])
     
- def google_login_button():
+def google_login_button():
     flow = get_google_flow()
 
     code_verifier = secrets.token_urlsafe(64)
