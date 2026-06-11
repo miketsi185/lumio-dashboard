@@ -127,6 +127,7 @@ def get_ga4_traffic(credentials):
         }
         for row in rows
     ])
+    
  def google_login_button():
     flow = get_google_flow()
 
