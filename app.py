@@ -31,48 +31,12 @@ h1,h2,h3,h4,p,div,span,label { color:white; }
 # -----------------------------
 # Helpers
 # -----------------------------
-def get_search_console_keywords():
+
+def secret(name, default=""):
     try:
-        creds_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT_JSON"])
-
-        credentials = service_account.Credentials.from_service_account_info(
-            creds_dict,
-            scopes=["https://www.googleapis.com/auth/webmasters.readonly"]
-        )
-
-        service = build("searchconsole", "v1", credentials=credentials)
-
-        site_url = st.secrets["SEARCH_CONSOLE_SITE_URL"]
-
-        request = {
-            "startDate": "2026-05-01",
-            "endDate": "2026-06-11",
-            "dimensions": ["query"],
-            "rowLimit": 20
-        }
-
-        response = service.searchanalytics().query(
-            siteUrl=site_url,
-            body=request
-        ).execute()
-
-        rows = response.get("rows", [])
-
-        data = []
-        for row in rows:
-            data.append({
-                "Query": row["keys"][0],
-                "Clicks": row.get("clicks", 0),
-                "Impressions": row.get("impressions", 0),
-                "CTR": round(row.get("ctr", 0) * 100, 2),
-                "Position": round(row.get("position", 0), 1),
-            })
-
-        return pd.DataFrame(data)
-
-    except Exception as e:
-        st.error(f"Search Console error: {e}")
-        return pd.DataFrame()
+        return st.secrets.get(name, default)
+    except Exception:
+        return default
 
 
 def metric_card(label, value):
