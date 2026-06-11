@@ -119,7 +119,7 @@ def google_login_button():
 
         request = {
             "startDate": "2025-01-01",
-            "endDate": "today",
+            "endDate": date.today().isoformat(),"
             "dimensions": ["query"],
             "rowLimit": 20,
     }
@@ -193,7 +193,7 @@ def get_ga4_traffic(credentials):
         property=f"properties/{property_id}",
         dimensions=[Dimension(name="sessionDefaultChannelGroup")],
         metrics=[Metric(name="sessions"), Metric(name="totalUsers")],
-        date_ranges=[DateRange(start_date="30daysAgo", end_date="today")]
+        date_ranges=[DateRange(start_date="2025-01-01", end_date="today")]
     )
 
     response = client.run_report(request)
