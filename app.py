@@ -5,6 +5,10 @@ import streamlit as st
 import plotly.express as px
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from google.analytics.data_v1beta import BetaAnalyticsDataClient
+from google.analytics.data_v1beta.types import DateRange, Metric, Dimension, RunReportRequest
 st.set_page_config(page_title="Lumio", layout="wide")
 
 # -----------------------------
@@ -31,7 +35,73 @@ h1,h2,h3,h4,p,div,span,label { color:white; }
 # -----------------------------
 # Helpers
 # -----------------------------
+def google_credentials(scopes):
+    creds_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT_JSON"])
+    return service_account.Credentials.from_service_account_info(
+        creds_dict,
+        scopes=scopes
+    )
 
+
+def get_search_console_keywords():
+    credentials = google_credentials(
+        ["https://www.googleapis.com/auth/webmasters.readonly"]
+    )
+
+    service = build("searchconsole", "v1", credentials=credentials)
+    site_url = st.secrets["SEARCH_CONSOLE_SITE_URL"]
+
+    request = {
+        "startDate": "2026-05-01",
+        "endDate": "2026-06-11",
+        "dimensions": ["query"],
+        "rowLimit": 20
+    }
+
+    response = service.searchanalytics().query(
+        siteUrl=site_url,
+        body=request
+    ).execute()
+
+    rows = response.get("rows", [])
+
+    return pd.DataFrame([
+        {
+            "Query": row["keys"][0],
+            "Clicks": row.get("clicks", 0),
+            "Impressions": row.get("impressions", 0),
+            "CTR": round(row.get("ctr", 0) * 100, 2),
+            "Position": round(row.get("position", 0), 1),
+        }
+        for row in rows
+    ])
+
+
+def get_ga4_traffic():
+    credentials = google_credentials(
+        ["https://www.googleapis.com/auth/analytics.readonly"]
+    )
+
+    client = BetaAnalyticsDataClient(credentials=credentials)
+    property_id = st.secrets["GA4_PROPERTY_ID"]
+
+    request = RunReportRequest(
+        property=f"properties/{property_id}",
+        dimensions=[Dimension(name="sessionDefaultChannelGroup")],
+        metrics=[Metric(name="sessions"), Metric(name="totalUsers")],
+        date_ranges=[DateRange(start_date="30daysAgo", end_date="today")]
+    )
+
+    response = client.run_report(request)
+
+    return pd.DataFrame([
+        {
+            "Channel": row.dimension_values[0].value,
+            "Sessions": int(row.metric_values[0].value),
+            "Users": int(row.metric_values[1].value),
+        }
+        for row in response.rows
+    ])
 def secret(name, default=""):
     try:
         return st.secrets.get(name, default)
@@ -350,7 +420,23 @@ with tabs[5]:
             st.json(data)
 
     st.markdown("---")
-    st.markdown("### Google")
+   st.markdown("### Google Live Tests")
+
+if st.button("Test Search Console", key="test_search_console"):
+    try:
+        df_sc = get_search_console_keywords()
+        st.success("Search Console live data loaded")
+        st.dataframe(df_sc, use_container_width=True)
+    except Exception as e:
+        st.error(e)
+
+if st.button("Test Google Analytics", key="test_ga4"):
+    try:
+        df_ga = get_ga4_traffic()
+        st.success("Google Analytics live data loaded")
+        st.dataframe(df_ga, use_container_width=True)
+    except Exception as e:
+        st.error(e)
     st.write("GA4 Property ID:", "✅ Added" if ga4_connected else "⚠️ Missing")
     st.write("Search Console URL:", "✅ Added" if gsc_connected else "⚠️ Missing")
     st.write("Service Account JSON:", "✅ Added" if google_sa_connected else "⚠️ Missing")
