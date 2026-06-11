@@ -69,10 +69,23 @@ def handle_google_oauth():
 
     if "code" in query_params:
         flow = get_google_flow()
-def google_login_button():
-        flow = get_google_flow()
+        flow.fetch_token(
+            code=query_params["code"],
+            code_verifier=st.secrets["GOOGLE_CODE_VERIFIER"]
+        )
 
-        code_verifier = st.secrets["GOOGLE_CODE_VERIFIER"]
+        credentials = flow.credentials
+        st.session_state["google_credentials"] = credentials
+        st.query_params.clear()
+        return credentials
+
+    return None
+
+
+def google_login_button():
+    flow = get_google_flow()
+
+    code_verifier = st.secrets["GOOGLE_CODE_VERIFIER"]
 
     auth_url, _ = flow.authorization_url(
         access_type="offline",
@@ -83,16 +96,6 @@ def google_login_button():
     )
 
     st.link_button("Connect Google", auth_url)
-
-        credentials = flow.credentials
-        st.session_state["google_credentials"] = credentials
-        st.query_params.clear()
-        return credentials
-
-    return None
-
-def get_ga4_traffic(credentials):
-    client = BetaAnalyticsDataClient(credentials=credentials)
 
     request = RunReportRequest(
         property=f"properties/{st.secrets['GA4_PROPERTY_ID']}",
