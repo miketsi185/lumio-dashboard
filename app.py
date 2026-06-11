@@ -69,9 +69,20 @@ def handle_google_oauth():
 
     if "code" in query_params:
         flow = get_google_flow()
-        flow.fetch_token(
-    code=query_params["code"],
-    code_verifier=st.session_state.get("google_code_verifier")
+        def google_login_button():
+    flow = get_google_flow()
+
+    code_verifier = st.secrets["GOOGLE_CODE_VERIFIER"]
+
+    auth_url, _ = flow.authorization_url(
+        access_type="offline",
+        include_granted_scopes="true",
+        prompt="consent",
+        code_challenge=code_verifier,
+        code_challenge_method="plain",
+    )
+
+    st.link_button("Connect Google", auth_url)
 )
         credentials = flow.credentials
         st.session_state["google_credentials"] = credentials
@@ -131,8 +142,7 @@ def get_ga4_traffic(credentials):
 def google_login_button():
     flow = get_google_flow()
 
-    code_verifier = secrets.token_urlsafe(64)
-    st.session_state["google_code_verifier"] = code_verifier
+    code_verifier = st.secrets["GOOGLE_CODE_VERIFIER"]
 
     auth_url, _ = flow.authorization_url(
         access_type="offline",
