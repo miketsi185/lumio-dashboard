@@ -1,3 +1,6 @@
+import base64
+import urllib.parse
+import requests
 import secrets
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
@@ -223,7 +226,93 @@ def metric_card(label, value):
         """,
         unsafe_allow_html=True,
     )
+XERO_SCOPES = "openid profile email accounting.transactions accounting.reports.read accounting.settings offline_access"
 
+
+def xero_login_button():
+    params = {
+        "response_type": "code",
+        "client_id": st.secrets["XERO_CLIENT_ID"],
+        "redirect_uri": st.secrets["XERO_REDIRECT_URI"],
+        "scope": XERO_SCOPES,
+        "state": "xero_auth",
+    }
+
+    auth_url = "https://login.xero.com/identity/connect/authorize?" + urllib.parse.urlencode(params)
+
+    st.link_button("Connect Xero", auth_url)
+
+
+def handle_xero_oauth():
+    query_params = st.query_params
+
+    if "xero_access_token" in st.session_state:
+        return st.session_state["xero_access_token"]
+
+    if "code" in query_params and query_params.get("state") == "xero_auth":
+        code = query_params["code"]
+
+        auth_string = f"{st.secrets['XERO_CLIENT_ID']}:{st.secrets['XERO_CLIENT_SECRET']}"
+        basic_auth = base64.b64encode(auth_string.encode()).decode()
+
+        response = requests.post(
+            "https://identity.xero.com/connect/token",
+            headers={
+                "Authorization": f"Basic {basic_auth}",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": st.secrets["XERO_REDIRECT_URI"],
+            },
+        )
+
+        if response.status_code != 200:
+            st.error(response.text)
+            return None
+
+        token_data = response.json()
+        access_token = token_data["access_token"]
+
+        st.session_state["xero_access_token"] = access_token
+
+        connections = requests.get(
+            "https://api.xero.com/connections",
+            headers={"Authorization": f"Bearer {access_token}"},
+        ).json()
+
+        if connections:
+            st.session_state["xero_tenant_id"] = connections[0]["tenantId"]
+            st.session_state["xero_tenant_name"] = connections[0]["tenantName"]
+
+        st.query_params.clear()
+        return access_token
+
+    return None
+
+
+def xero_get(endpoint):
+    access_token = st.session_state.get("xero_access_token")
+    tenant_id = st.session_state.get("xero_tenant_id")
+
+    if not access_token or not tenant_id:
+        return None
+
+    response = requests.get(
+        f"https://api.xero.com/api.xro/2.0/{endpoint}",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "Xero-tenant-id": tenant_id,
+            "Accept": "application/json",
+        },
+    )
+
+    if response.status_code != 200:
+        st.error(response.text)
+        return None
+
+    return response.json()
 
 # -----------------------------
 # Demo Data
@@ -314,7 +403,24 @@ def google_status():
     has_sa = service_account not in ["", "{}"]
     return ga4, gsc, has_sa
 
+st.markdown("### Xero OAuth")
 
+xero_token = handle_xero_oauth()
+
+if xero_token is None:
+    xero_login_button()
+else:
+    st.success(f"Xero connected: {st.session_state.get('xero_tenant_name', '')}")
+
+    if st.button("Test Xero Organisation", key="test_xero_org"):
+        data = xero_get("Organisation")
+        if data:
+            st.json(data)
+
+    if st.button("Test Xero Invoices", key="test_xero_invoices"):
+        data = xero_get("Invoices")
+        if data:
+            st.json(data)
 # -----------------------------
 # Sidebar
 # -----------------------------
