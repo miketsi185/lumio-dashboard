@@ -226,7 +226,7 @@ def metric_card(label, value):
         """,
         unsafe_allow_html=True,
     )
-XERO_SCOPES = "openid profile email offline_access accounting.transactions.read accounting.reports.read accounting.settings.read"
+XERO_SCOPES = "openid profile email offline_access accounting.transactions.read"
 
 
 def xero_login_button():
@@ -238,7 +238,7 @@ def xero_login_button():
         "state": "xero_auth",
     }
 
-    auth_url = "https://login.xero.com/identity/connect/authorize?" + urllib.parse.urlencode(params)
+    auth_url = "https://login.xero.com/identity/connect/authorize?" + urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
 
     st.link_button("Connect Xero", auth_url)
 
