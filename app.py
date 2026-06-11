@@ -489,7 +489,7 @@ with tabs[5]:
             st.success("Splose connected")
             st.json(data)
 
- st.markdown("### Google OAuth")
+st.markdown("### Google OAuth")
 
 credentials = handle_google_oauth()
 
