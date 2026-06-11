@@ -226,7 +226,7 @@ def metric_card(label, value):
         """,
         unsafe_allow_html=True,
 
-
+    )
 def xero_login_button():
     params = {
         "response_type": "code",
