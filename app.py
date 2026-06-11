@@ -3,7 +3,8 @@ import requests
 import pandas as pd
 import streamlit as st
 import plotly.express as px
-
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 st.set_page_config(page_title="Lumio", layout="wide")
 
 # -----------------------------
@@ -30,11 +31,48 @@ h1,h2,h3,h4,p,div,span,label { color:white; }
 # -----------------------------
 # Helpers
 # -----------------------------
-def secret(name, default=""):
+def get_search_console_keywords():
     try:
-        return st.secrets.get(name, default)
-    except Exception:
-        return default
+        creds_dict = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT_JSON"])
+
+        credentials = service_account.Credentials.from_service_account_info(
+            creds_dict,
+            scopes=["https://www.googleapis.com/auth/webmasters.readonly"]
+        )
+
+        service = build("searchconsole", "v1", credentials=credentials)
+
+        site_url = st.secrets["SEARCH_CONSOLE_SITE_URL"]
+
+        request = {
+            "startDate": "2026-05-01",
+            "endDate": "2026-06-11",
+            "dimensions": ["query"],
+            "rowLimit": 20
+        }
+
+        response = service.searchanalytics().query(
+            siteUrl=site_url,
+            body=request
+        ).execute()
+
+        rows = response.get("rows", [])
+
+        data = []
+        for row in rows:
+            data.append({
+                "Query": row["keys"][0],
+                "Clicks": row.get("clicks", 0),
+                "Impressions": row.get("impressions", 0),
+                "CTR": round(row.get("ctr", 0) * 100, 2),
+                "Position": round(row.get("position", 0), 1),
+            })
+
+        return pd.DataFrame(data)
+
+    except Exception as e:
+        st.error(f"Search Console error: {e}")
+        return pd.DataFrame()
 
 
 def metric_card(label, value):
@@ -276,7 +314,18 @@ with tabs[3]:
     fig = px.bar(traffic_long, x="Week", y="Sessions", color="Channel")
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("### Search Console - keyword data")
+    st.markdown("### Search Console - live keyword data")
+
+if st.button("Refresh Search Console Data"):
+    live_sc = get_search_console_keywords()
+
+    if not live_sc.empty:
+        st.success("Search Console connected successfully")
+        st.dataframe(live_sc, use_container_width=True)
+    else:
+        st.warning("No live Search Console data returned. Showing demo data.")
+        st.dataframe(search_console, use_container_width=True)
+else:
     st.dataframe(search_console, use_container_width=True)
 
 
