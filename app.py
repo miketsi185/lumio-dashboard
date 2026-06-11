@@ -134,24 +134,19 @@ def google_login_button():
 
     st.link_button("Connect Google", auth_url)
 
-df_sc = get_search_console_keywords(credentials):
-    credentials = google_credentials(
-        ["https://www.googleapis.com/auth/webmasters.readonly"]
-    )
-
+def get_search_console_keywords(credentials):
     service = build("searchconsole", "v1", credentials=credentials)
-    site_url = st.secrets["SEARCH_CONSOLE_SITE_URL"]
 
     request = {
-        "startDate": "2026-05-01",
-        "endDate": "2026-06-11",
+        "startDate": "2025-01-01",
+        "endDate": "today",
         "dimensions": ["query"],
-        "rowLimit": 20
+        "rowLimit": 20,
     }
 
     response = service.searchanalytics().query(
-        siteUrl=site_url,
-        body=request
+        siteUrl=st.secrets["SEARCH_CONSOLE_SITE_URL"],
+        body=request,
     ).execute()
 
     rows = response.get("rows", [])
@@ -166,7 +161,6 @@ df_sc = get_search_console_keywords(credentials):
         }
         for row in rows
     ])
-
 
 def get_ga4_traffic(credentials):
     client = BetaAnalyticsDataClient(credentials=credentials)
