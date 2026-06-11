@@ -119,7 +119,7 @@ def google_login_button():
 
         request = {
             "startDate": "2025-01-01",
-            "endDate": date.today().isoformat(),"
+            ""endDate": "2026-06-11"
             "dimensions": ["query"],
             "rowLimit": 20,
     }
