@@ -97,13 +97,13 @@ def get_ga4_traffic(credentials):
         for row in response.rows
     ])
     def get_search_console_keywords(credentials):
-    service = build("searchconsole", "v1", credentials=credentials)
+        service = build("searchconsole", "v1", credentials=credentials)
 
-    request = {
-        "startDate": "2025-01-01",
-        "endDate": "today",
-        "dimensions": ["query"],
-        "rowLimit": 20,
+        request = {
+            "startDate": "2025-01-01",
+            "endDate": "today",
+            "dimensions": ["query"],
+            "rowLimit": 20,
     }
 
     response = service.searchanalytics().query(
