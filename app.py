@@ -489,7 +489,7 @@ with tabs[5]:
             st.success("Splose connected")
             st.json(data)
 
-  st.markdown("### Google OAuth")
+ st.markdown("### Google OAuth")
 
 credentials = handle_google_oauth()
 
@@ -504,6 +504,7 @@ else:
             st.dataframe(df_ga, use_container_width=True)
         except Exception as e:
             st.error(e)
+            
 
     if st.button("Test Search Console", key="oauth_gsc"):
         try:
