@@ -535,7 +535,7 @@ if st.button("Test Search Console", key="test_search_console"):
 
 if st.button("Test Google Analytics", key="test_ga4"):
     try:
-        df_ga = get_ga4_traffic()
+        df_ga = get_ga4_traffic(credentials)
         st.success("Google Analytics live data loaded")
         st.dataframe(df_ga, use_container_width=True)
     except Exception as e:
