@@ -83,7 +83,7 @@ def handle_google_oauth():
     )
 
     st.link_button("Connect Google", auth_url)
-)
+
         credentials = flow.credentials
         st.session_state["google_credentials"] = credentials
         st.query_params.clear()
