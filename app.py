@@ -225,8 +225,6 @@ def metric_card(label, value):
         </div>
         """,
         unsafe_allow_html=True,
-    )
-XERO_SCOPES = "openid profile email offline_access accounting.transactions.read"
 
 
 def xero_login_button():
