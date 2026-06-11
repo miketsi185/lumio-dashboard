@@ -69,10 +69,10 @@ def handle_google_oauth():
 
     if "code" in query_params:
         flow = get_google_flow()
-        def google_login_button():
-    flow = get_google_flow()
+def google_login_button():
+        flow = get_google_flow()
 
-    code_verifier = st.secrets["GOOGLE_CODE_VERIFIER"]
+        code_verifier = st.secrets["GOOGLE_CODE_VERIFIER"]
 
     auth_url, _ = flow.authorization_url(
         access_type="offline",
