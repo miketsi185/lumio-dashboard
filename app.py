@@ -204,7 +204,7 @@ with tabs[0]:
 
     st.markdown("### Revenue by practitioner")
     fig = px.bar(clinical, x="Practitioner", y="Revenue")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="overview_revenue_chart")
 
 
 # -----------------------------
@@ -227,7 +227,7 @@ with tabs[1]:
 
     st.markdown("### Appointments by practitioner")
     fig = px.bar(clinical, x="Practitioner", y="Appointments")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="clinical_appointments_chart")
 
     st.markdown("### Performance summary")
     st.dataframe(clinical, use_container_width=True)
@@ -251,7 +251,7 @@ with tabs[2]:
 
     st.markdown("### Cancellation rate by practitioner")
     fig = px.bar(clinical, x="Practitioner", y="Cancel Rate")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="practice_cancel_chart")
 
 
 # -----------------------------
@@ -276,7 +276,7 @@ with tabs[3]:
     traffic_long = marketing.melt(id_vars="Week", value_vars=["Direct", "Organic", "Paid"],
                                   var_name="Channel", value_name="Sessions")
     fig = px.bar(traffic_long, x="Week", y="Sessions", color="Channel")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="marketing_traffic_chart")
 
     st.markdown("### Search Console - live keyword data")
 
@@ -317,7 +317,7 @@ with tabs[4]:
 
     st.markdown("### Revenue by practitioner")
     fig = px.bar(clinical, x="Practitioner", y="Revenue")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="business_health_revenue_chart")
 
 
 # -----------------------------
