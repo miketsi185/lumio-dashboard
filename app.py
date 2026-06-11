@@ -38,7 +38,100 @@ h1,h2,h3,h4,p,div,span,label { color:white; }
 # Helpers
 # -----------------------------
 
+GOOGLE_SCOPES = [
+    "https://www.googleapis.com/auth/analytics.readonly",
+    "https://www.googleapis.com/auth/webmasters.readonly",
+]
 
+
+def get_google_flow():
+    return Flow.from_client_config(
+        {
+            "web": {
+                "client_id": st.secrets["GOOGLE_CLIENT_ID"],
+                "client_secret": st.secrets["GOOGLE_CLIENT_SECRET"],
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": [st.secrets["GOOGLE_REDIRECT_URI"]],
+            }
+        },
+        scopes=GOOGLE_SCOPES,
+        redirect_uri=st.secrets["GOOGLE_REDIRECT_URI"],
+    )
+
+
+def handle_google_oauth():
+    query_params = st.query_params
+
+    if "google_credentials" in st.session_state:
+        return st.session_state["google_credentials"]
+
+    if "code" in query_params:
+        flow = get_google_flow()
+        flow.fetch_token(code=query_params["code"])
+        credentials = flow.credentials
+        st.session_state["google_credentials"] = credentials
+        st.query_params.clear()
+        return credentials
+
+    return None
+
+def get_ga4_traffic(credentials):
+    client = BetaAnalyticsDataClient(credentials=credentials)
+
+    request = RunReportRequest(
+        property=f"properties/{st.secrets['GA4_PROPERTY_ID']}",
+        dimensions=[Dimension(name="sessionDefaultChannelGroup")],
+        metrics=[Metric(name="sessions"), Metric(name="totalUsers")],
+        date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+    )
+
+    response = client.run_report(request)
+
+    return pd.DataFrame([
+        {
+            "Channel": row.dimension_values[0].value,
+            "Sessions": int(row.metric_values[0].value),
+            "Users": int(row.metric_values[1].value),
+        }
+        for row in response.rows
+    ])
+    def get_search_console_keywords(credentials):
+    service = build("searchconsole", "v1", credentials=credentials)
+
+    request = {
+        "startDate": "2026-05-01",
+        "endDate": "2026-06-11",
+        "dimensions": ["query"],
+        "rowLimit": 20,
+    }
+
+    response = service.searchanalytics().query(
+        siteUrl=st.secrets["SEARCH_CONSOLE_SITE_URL"],
+        body=request,
+    ).execute()
+
+    rows = response.get("rows", [])
+
+    return pd.DataFrame([
+        {
+            "Query": row["keys"][0],
+            "Clicks": row.get("clicks", 0),
+            "Impressions": row.get("impressions", 0),
+            "CTR": round(row.get("ctr", 0) * 100, 2),
+            "Position": round(row.get("position", 0), 1),
+        }
+        for row in rows
+    ])
+def google_login_button():
+    flow = get_google_flow()
+    auth_url, _ = flow.authorization_url(
+        access_type="offline",
+        include_granted_scopes="true",
+        prompt="consent",
+    )
+
+    st.link_button("Connect Google", auth_url)
 
 def get_search_console_keywords():
     credentials = google_credentials(
@@ -404,7 +497,28 @@ with tabs[5]:
             st.success("Splose connected")
             st.json(data)
 
-    st.markdown("---")
+  st.markdown("### Google OAuth")
+
+credentials = handle_google_oauth()
+
+if credentials is None:
+    google_login_button()
+else:
+    st.success("Google connected")
+
+    if st.button("Test Google Analytics", key="oauth_ga4"):
+        try:
+            df_ga = get_ga4_traffic(credentials)
+            st.dataframe(df_ga, use_container_width=True)
+        except Exception as e:
+            st.error(e)
+
+    if st.button("Test Search Console", key="oauth_gsc"):
+        try:
+            df_sc = get_search_console_keywords(credentials)
+            st.dataframe(df_sc, use_container_width=True)
+        except Exception as e:
+            st.error(e)
     st.markdown("### Xero")
     st.write("Status:", "✅ Connected" if xero_connected else "⚠️ Missing Xero access token")
 
