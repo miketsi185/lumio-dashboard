@@ -114,17 +114,7 @@ def get_ga4_traffic(credentials):
     rows = response.get("rows", [])
 
     return pd.DataFrame(rows)
-        
-        {
-            "Query": row["keys"][0],
-            "Clicks": row.get("clicks", 0),
-            "Impressions": row.get("impressions", 0),
-            "CTR": round(row.get("ctr", 0) * 100, 2),
-            "Position": round(row.get("position", 0), 1),
-        }
-        for row in rows
-    
-    ])
+  
 def google_login_button():
     flow = get_google_flow()
     auth_url, _ = flow.authorization_url(
